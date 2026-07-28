@@ -1235,6 +1235,15 @@ function formatDate(year, month, day) {
   }
 
   function printCalendar() {
+    // 懒加载 html2canvas
+    if (typeof html2canvas === 'undefined') {
+      var s = document.createElement('script');
+      s.src = 'html2canvas.min.js';
+      s.onload = function() { setTimeout(printCalendar, 200); };
+      document.head.appendChild(s);
+      return;
+    }
+
     document.body.classList.add('no-btns');
     var wrapper = document.querySelector('.calendar-wrapper');
     var banner = document.querySelector('.header-banner');

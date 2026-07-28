@@ -953,9 +953,9 @@
     }).join('');
   }
 
-    /* ====== 云同步 (jsonbox.io - 免费公共存储, 无需任何账号) ====== */
-  var BOX_ID = 'susufufu_calendar_' + '7a3f';
-  var API_BASE = 'https://jsonbox.io/' + BOX_ID;
+    /* ====== 云同步 (jsonblob.com - 免费公共存储, 无需任何账号) ====== */
+  var BLOB_ID = '019fa8e0-5e2c-75c8-b1cc-d6789a267505';
+  var API_BASE = 'https://jsonblob.com/' + BOX_ID;
   var cloudData = {};
   var syncLocked = false;
 
@@ -966,9 +966,9 @@
     xhr.onload = function() {
       if (xhr.status === 200) {
         try {
-          var arr = JSON.parse(xhr.responseText);
-          if (arr && arr.length > 0 && arr[0].data) {
-            cloudData = arr[0].data;
+          var data = JSON.parse(xhr.responseText);
+          if (data && typeof data === 'object') {
+            cloudData = data;
           }
         } catch(e) {}
       }
@@ -981,7 +981,7 @@
   function syncPush(callback) {
     syncLocked = true;
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', API_BASE);
+    xhr.open('PUT', API_BASE);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = function() {
       syncLocked = false;
@@ -991,7 +991,7 @@
       syncLocked = false;
       if (callback) callback();
     };
-    xhr.send(JSON.stringify({ data: cloudData }));
+    xhr.send(JSON.stringify(cloudData));
     setTimeout(function() { syncLocked = false; }, 15000);
   }
 

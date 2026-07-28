@@ -956,10 +956,12 @@
   /* ====== 云同步 (GitHub API) ====== */
   const SYNC_TOKEN = 'ghp_A07lHkR' + 'ppv1Mp9RTzos4YJyoHU79Z03dF2Y9';
   let cloudData = {};       // 云端最新数据
-  let lastSyncSha = '';     // 上次提交的 SHA, 用于更新
+  let lastSyncSha = '';     // 上次提交的 SHA
+  let syncLocked = false;   // 推送锁: 推送期间不拉取
 
   // 从 GitHub 拉取最新数据
   function syncPull(callback) {
+    if (syncLocked) { if (callback) callback(); return; }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', 'https://api.github.com/repos/Sean-Sue/susufufu-calendar/contents/data.json?t=' + Date.now());
     xhr.setRequestHeader('Authorization', 'Bearer ' + SYNC_TOKEN);
@@ -981,6 +983,7 @@
 
   // 上传数据到 GitHub
   function syncPush(callback) {
+    syncLocked = true;
     var content = btoa(unescape(encodeURIComponent(JSON.stringify(cloudData))));
     var payload = { message: 'sync ' + new Date().toISOString().slice(0,16), content: content };
     if (lastSyncSha) payload.sha = lastSyncSha;
@@ -994,17 +997,18 @@
       if (xhr.status === 200 || xhr.status === 201) {
         var res = JSON.parse(xhr.responseText);
         lastSyncSha = res.content.sha;
-        console.log('syncPush OK');
-      } else {
-        console.error('syncPush failed:', xhr.status, xhr.responseText);
       }
+      syncLocked = false;
       if (callback) callback();
     };
-    xhr.onerror = function(e) {
-      console.error('syncPush network error');
+    xhr.onerror = function() {
+      syncLocked = false;
       if (callback) callback();
     };
     xhr.send(JSON.stringify(payload));
+
+    // 15秒超时解锁
+    setTimeout(function() { syncLocked = false; }, 15000);
   }
 
   function storageKey(year, month) {
@@ -1021,9 +1025,8 @@
   function saveRecords(year, month, records) {
     var key = storageKey(year, month);
     cloudData[key] = records;
-    syncPush(function() {
-      renderCalendar();
-    });
+    renderCalendar();      // 立即渲染给用户看
+    syncPush(null);         // 异步推送到云端
   }
 
   function formatDate(year, month, day) {

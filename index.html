@@ -953,44 +953,24 @@
     }).join('');
   }
 
-  /* ====== 云同步 (GitHub API) ====== */
-  let syncToken = sessionStorage.getItem('susufufu_token') || '';
-  let cloudData = {};       // 云端最新数据
-  let lastSyncSha = '';     // 上次提交的 SHA
-  let syncLocked = false;   // 推送锁: 推送期间不拉取
+    /* ====== 云同步 (jsonbox.io - 免费公共存储, 无需任何账号) ====== */
+  var BOX_ID = 'susufufu_calendar_' + '7a3f';
+  var API_BASE = 'https://jsonbox.io/' + BOX_ID;
+  var cloudData = {};
+  var syncLocked = false;
 
-  /* ====== Token 设置 (不存代码里, 避免被 GitHub 撤销) ====== */
-  function setupSyncToken() {
-    if (syncToken) return;
-    var saved = sessionStorage.getItem('susufufu_token');
-    if (saved) {
-      syncToken = saved;
-    } else {
-      var input = prompt('请输入 GitHub Token 以开启同步:
-
-没有 token? 去 https://github.com/settings/tokens 创建一个 (勾选 repo 权限)', '');
-      if (input && input.trim()) {
-        syncToken = input.trim();
-        sessionStorage.setItem('susufufu_token', syncToken);
-      }
-    }
-  }
-
-  // 从 GitHub 拉取最新数据
   function syncPull(callback) {
     if (syncLocked) { if (callback) callback(); return; }
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'https://api.github.com/repos/Sean-Sue/susufufu-calendar/contents/data.json?t=' + Date.now());
-    xhr.setRequestHeader('Authorization', 'Bearer ' + syncToken);
-    xhr.setRequestHeader('Accept', 'application/vnd.github.v3+json');
+    xhr.open('GET', API_BASE + '?sort=createdOn&limit=1&t=' + Date.now());
     xhr.onload = function() {
       if (xhr.status === 200) {
         try {
-          var res = JSON.parse(xhr.responseText);
-          lastSyncSha = res.sha;
-          var raw = decodeURIComponent(escape(atob(res.content)));
-          cloudData = JSON.parse(raw);
-        } catch(e) { console.error('syncPull parse error:', e); }
+          var arr = JSON.parse(xhr.responseText);
+          if (arr && arr.length > 0 && arr[0].data) {
+            cloudData = arr[0].data;
+          }
+        } catch(e) {}
       }
       if (callback) callback();
     };
@@ -998,23 +978,12 @@
     xhr.send();
   }
 
-  // 上传数据到 GitHub
   function syncPush(callback) {
     syncLocked = true;
-    var content = btoa(unescape(encodeURIComponent(JSON.stringify(cloudData))));
-    var payload = { message: 'sync ' + new Date().toISOString().slice(0,16), content: content };
-    if (lastSyncSha) payload.sha = lastSyncSha;
-
     var xhr = new XMLHttpRequest();
-    xhr.open('PUT', 'https://api.github.com/repos/Sean-Sue/susufufu-calendar/contents/data.json');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + syncToken);
-    xhr.setRequestHeader('Accept', 'application/vnd.github.v3+json');
+    xhr.open('POST', API_BASE);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = function() {
-      if (xhr.status === 200 || xhr.status === 201) {
-        var res = JSON.parse(xhr.responseText);
-        lastSyncSha = res.content.sha;
-      }
       syncLocked = false;
       if (callback) callback();
     };
@@ -1022,9 +991,7 @@
       syncLocked = false;
       if (callback) callback();
     };
-    xhr.send(JSON.stringify(payload));
-
-    // 15秒超时解锁
+    xhr.send(JSON.stringify({ data: cloudData }));
     setTimeout(function() { syncLocked = false; }, 15000);
   }
 
@@ -1042,11 +1009,12 @@
   function saveRecords(year, month, records) {
     var key = storageKey(year, month);
     cloudData[key] = records;
-    renderCalendar();      // 立即渲染给用户看
-    syncPush(null);         // 异步推送到云端
+    renderCalendar();
+    syncPush(null);
   }
 
-  function formatDate(year, month, day) {
+
+function formatDate(year, month, day) {
     return `${year}年${month+1}月${day}日`;
   }
 
@@ -1293,7 +1261,6 @@
   });
 
   // 初始化: 先拉云端数据, 再渲染
-  setupSyncToken();
   renderWeekdayHeaders();
   syncPull(function() { renderCalendar(); });
 

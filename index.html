@@ -811,7 +811,7 @@
       <button class="btn btn-print" id="btnPrintList" onclick="printCalendar()" style="display:none">🖨 打印出来挂门口</button>
     </div>
 
-    <div class="footer-decor">🐰 吵吵闹闹也是爱你的方式 🐰</div>
+    <div class="footer-decor" id="footerMsg">🐰 吵吵闹闹也是爱你的方式 🐰</div>
   </div>
 </div>
 
@@ -1072,6 +1072,33 @@ function formatDate(year, month, day) {
     }
 
     grid.innerHTML = html;
+    updateFooterMessage();
+  }
+
+  /* ====== 底部鼓励语 ====== */
+  var encourageMsgs = [
+    '🐰 这个月没有吵架，太棒啦！继续甜甜蜜蜜～ 🎉',
+    '🐰 才1次小别扭而已，我们超稳的！💪',
+    '🐰 2次小火花，越磨越闪亮 ✨',
+    '🐰 3次而已，吵完抱一抱更暖了 🫂',
+    '🐰 4次小摩擦，爱情的调味剂刚刚好 🌶️',
+    '🐰 5次斗嘴也挡不住我爱你呀 💕',
+    '🐰 6次也是认真爱的证明，超在乎你 🤍',
+    '🐰 7次啦！吵吵闹闹也是爱你的方式 🌈',
+    '🐰 8次也有在好好相爱，对吧对吧～ 🫶',
+    '🐰 9次了哎，但我们永远和好第一 💝',
+    '🐰 10次！越吵越甜的秘诀就是我们吧 🍯',
+  ];
+  function getEncourageMsg(count) {
+    if (count < encourageMsgs.length) return encourageMsgs[count];
+    return '🐰 吵了' + count + '次啦，但每一回都是因为在乎你呀 💗';
+  }
+  function updateFooterMessage() {
+    var records = loadRecords(currentYear, currentMonth);
+    var count = Object.keys(records).filter(function(k) {
+      return records[k] && (records[k].reason || records[k].stickerEmoji);
+    }).length;
+    document.getElementById('footerMsg').textContent = getEncourageMsg(count);
   }
 
   function escapeHtml(str) {

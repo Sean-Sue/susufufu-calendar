@@ -803,14 +803,12 @@
         <span class="rabbit">🐰</span> 还没有任何吵架记录哦～
       </div>
       <div id="recordList"></div>
-      <div class="list-print-btn">
-        <button class="btn btn-print" onclick="printCalendar()">🖨 打印出来挂门口</button>
-      </div>
     </div>
 
     <!-- 底部按钮 -->
     <div class="footer-actions">
       <button class="btn btn-toggle" id="btnToggle" onclick="toggleView()">📋 查看全部记录</button>
+      <button class="btn btn-print" id="btnPrintList" onclick="printCalendar()" style="display:none">🖨 打印出来挂门口</button>
     </div>
 
     <div class="footer-decor">🐰 吵吵闹闹也是爱你的方式 🐰</div>
@@ -882,6 +880,7 @@
 
     if (isListView) {
       btn.textContent = '📅 返回日历';
+      document.getElementById('btnPrintList').style.display = '';
       calendar.classList.add('hidden');
       if (headers) headers.classList.add('hidden');
       if (monthNav) monthNav.classList.add('hidden');
@@ -890,6 +889,7 @@
       renderRecordList();
     } else {
       btn.textContent = '📋 查看全部记录';
+      document.getElementById('btnPrintList').style.display = 'none';
       calendar.classList.remove('hidden');
       if (headers) headers.classList.remove('hidden');
       if (monthNav) monthNav.classList.remove('hidden');

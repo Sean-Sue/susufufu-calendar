@@ -948,7 +948,7 @@
           <div class="ri-sticker ${r.stickerCls}">${r.stickerEmoji}</div>
           <div class="ri-date">${dateStr} 周${weekDay}</div>
           <div class="ri-reason">${r.reason ? escapeHtml(r.reason) : '<span style="color:#d0c0b8">(只贴了心情贴纸)</span>'}</div>
-          <div class="ri-count">第${idx+1}次</div>
+          <div class="ri-count">第${allRecords.length - idx}次</div>
         </div>`;
     }).join('');
   }
